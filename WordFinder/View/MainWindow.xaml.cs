@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using WordFinder.ViewModel;
 
 namespace WordFinder.View
 {
@@ -23,6 +24,8 @@ namespace WordFinder.View
         public MainWindow()
         {
             InitializeComponent();
+
+            DataContext = new MainWindowVM();
         }
     }
 }

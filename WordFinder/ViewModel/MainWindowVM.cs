@@ -13,6 +13,7 @@ namespace WordFinder.ViewModel
 {
     public class MainWindowVM : INotifyPropertyChanged
     {
+        private FoldersReader reader;
         private string forbiddenWords = "split with 1 space";
         private string initFolder = "";
         private int maxProgressBar;
@@ -59,7 +60,9 @@ namespace WordFinder.ViewModel
 
         public MainWindowVM()
         {
-            StartCommand = new DelegateCommand(FoldersReader.call);
+            reader = new();
+
+            StartCommand = new DelegateCommand(() => reader.Start(this));
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
