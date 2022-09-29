@@ -21,18 +21,18 @@
         
         <!--FORBIDDEN WORDS-->
         <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center">forbidden words:</TextBlock>
-        <TextBox Grid.Row="0" Grid.Column="1" Margin="5" FontSize="18"></TextBox>
+        <TextBox Text="{Binding ForbiddenWords}" Grid.Row="0" Grid.Column="1" Margin="5" FontSize="18"></TextBox>
         <Button Grid.Row="0" Grid.Column="2" Margin="5">Load...</Button>
         
         <!--COPYING DIRECTORY-->
         <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center">directory to copy:</TextBlock>
-        <TextBox Grid.Row="1" Grid.Column="1" Margin="5" FontSize="18"></TextBox>
+        <TextBox Text="{Binding InitFolder}" Grid.Row="1" Grid.Column="1" Margin="5" FontSize="18"></TextBox>
         <Button Grid.Row="1" Grid.Column="2" Margin="5">Load...</Button>
         
         <!--UI BUTTONS-->
         <Button FontSize="30" Grid.Row="2" Grid.Column="1" Height="100" Width="200">START</Button>
         
         <!--PROGRESS BAR-->
-        <ProgressBar Grid.Row="5" Grid.ColumnSpan="3" Margin="5"></ProgressBar>
+        <ProgressBar Value="{Binding ValProgressBar}" Maximum="{Binding MaxProgressBar}" Grid.Row="5" Grid.ColumnSpan="3" Margin="5"></ProgressBar>
     </Grid>
 </Window>
