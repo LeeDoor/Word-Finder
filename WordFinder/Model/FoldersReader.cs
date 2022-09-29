@@ -8,6 +8,7 @@ using WordFinder.ViewModel;
 using System.IO;
 using System.Windows.Shapes;
 using System.Reflection.PortableExecutable;
+using System.Windows;
 
 namespace WordFinder.Model
 {
@@ -25,7 +26,15 @@ namespace WordFinder.Model
         /// <param name="vm">vm with all needed properties</param>
         public void Start(MainWindowVM vm)
         {
+            //var a = FindWrongWordsInFile(@"C:\Users\samos\OneDrive\Рабочий стол\baba.txt", new string[] { "orsgorsgko", "getkpohgpoketgko" });//, @"C:\Users\samos\OneDrive\Рабочий стол\worka");
+            //StringBuilder sb = new();
+            //foreach(var pair in a)
+            //{
+            //    sb.AppendLine($"{pair.Key} was meeted {pair.Value} times");
+            //}
+            //MessageBox.Show(sb.ToString());
 
+            CopyFileWithStars(@"C:\Users\samos\OneDrive\Рабочий стол\baba.txt", new string[] { "orsgorsgko", "getkpohgpoketgko" }, @"D:\file.txt");
         }
 
         private string NormalizeWord(string word)
@@ -47,6 +56,8 @@ namespace WordFinder.Model
             if(coincidences.Count > 0)
             {
                 string pathToCopy = workingDir + "\\" + copyFolder + "\\" + pathToFile.Replace('\\', '.');
+                if (!File.Exists(pathToCopy)) 
+                    File.Create(pathToCopy);
                 File.Copy(pathToFile, pathToCopy);
             }
             return coincidences;
@@ -69,9 +80,13 @@ namespace WordFinder.Model
                 {
                     foreach (string w in line.Split())
                     {
-                        if (forbiddens.Contains(NormalizeWord(w)))
+                        string curW = NormalizeWord(w);
+                        if (forbiddens.Contains(curW))
                         {
-                            res[NormalizeWord(w)] += 1;
+                            if (res.ContainsKey(curW))
+                                res[curW] += 1;
+                            else
+                                res[curW] = 1;
                         }
                     }
                 }
@@ -81,23 +96,22 @@ namespace WordFinder.Model
 
         private void CopyFileWithStars(string pathToFile, string[] forbiddens, string fileToCopy)
         {
-            using (StreamReader sr = new StreamReader(pathToFile))
+            File.Create(fileToCopy).Dispose();
+            string[] allLines = File.ReadAllLines(pathToFile);
+            for(int i = 0; i < allLines.Length; i++)
             {
-                string? line;
-                while ((line = sr.ReadLine()) != null)
+                StringBuilder sb = new();
+                foreach(var word in allLines[i].Split())
                 {
-                    StringBuilder sb = new();
-                    foreach (string w in line.Split())
-                    {
-                        if (forbiddens.Contains(NormalizeWord(w)))
-                            sb.Append("*******");
-                        else
-                            sb.Append(w);
-                        sb.Append(' ');
-                    }
-                    File.AppendAllLines(fileToCopy, new string[] { sb.ToString() });
+                    if (forbiddens.Contains(NormalizeWord(word)))
+                        sb.Append("*******");
+                    else
+                        sb.Append(word);
+                    sb.Append(' ');
                 }
+                allLines[i] = sb.ToString();
             }
+            File.AppendAllLines(fileToCopy, allLines);
         }
     }
 }
