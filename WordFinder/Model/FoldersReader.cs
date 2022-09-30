@@ -36,9 +36,42 @@ namespace WordFinder.Model
 
             //CopyFileWithStars(@"C:\Users\samos\OneDrive\Рабочий стол\baba.txt", new string[] { "orsgorsgko", "getkpohgpoketgko" }, @"D:\file.txt");
 
-            Directory.CreateDirectory(vm.InitFolder);
+            if (Directory.Exists(vm.InitFolder + "\\" + replacedFolder))
+                Directory.Delete(vm.InitFolder + "\\" + replacedFolder, true);
+            Directory.CreateDirectory(vm.InitFolder + "\\" + replacedFolder);
 
+            if (Directory.Exists(vm.InitFolder + "\\" + copyFolder))
+                Directory.Delete(vm.InitFolder + "\\" + copyFolder, true);
+            Directory.CreateDirectory(vm.InitFolder + "\\" + copyFolder);
+
+            Directory.CreateDirectory(vm.InitFolder);
+            CheckFolder(@"C:\Users\samos\OneDrive\Рабочий стол\worka", vm.ForbiddenWords.Split(), vm.InitFolder);
             //CheckFile(@"C:\Users\samos\OneDrive\Рабочий стол\baba.txt", vm.ForbiddenWords.Split(), vm.InitFolder);
+        }
+
+        /// <summary>
+        /// recursively checks given folder and returns full statistic about it
+        /// </summary>
+        /// <param name="folderPath">path to this folder</param>
+        /// <param name="forbiddens">forbidden words to find</param>
+        /// <param name="workingDir">directory we work with</param>
+        /// <returns>fill stat about folder</returns>
+        private Dictionary<string, int> CheckFolder(string folderPath, string[] forbiddens, string workingDir)
+        {
+            Dictionary<string, int> res = new();
+            string[] subdirs = Directory.GetDirectories(folderPath);
+            foreach(var subdir in subdirs)
+            {
+                var dic = CheckFolder(subdir, forbiddens, workingDir);
+                res.Concat(dic);
+            }
+
+            foreach(var file in Directory.GetFiles(folderPath))
+            {
+                var dic = CheckFile(file, forbiddens, workingDir);
+                res.Concat(dic);
+            }
+            return res;
         }
 
         /// <summary>
@@ -73,15 +106,9 @@ namespace WordFinder.Model
             if(coincidences.Count > 0)
             {
                 string pathToCopy = workingDir + "\\" + copyFolder + "\\" + pathToFile.Replace('\\', '-').Replace(':', ' ');
-                if (Directory.Exists(workingDir + "\\" + copyFolder)) 
-                    Directory.Delete(workingDir + "\\" + copyFolder, true);
-                Directory.CreateDirectory(workingDir + "\\" + copyFolder);
                 File.Copy(pathToFile, pathToCopy);
 
                 string pathToCensored = workingDir + "\\" + replacedFolder + "\\" + pathToFile.Replace('\\', '-').Replace(':', ' ');
-                if (Directory.Exists(workingDir + "\\" + replacedFolder))
-                    Directory.Delete(workingDir + "\\" + replacedFolder, true);
-                Directory.CreateDirectory(workingDir + "\\" + replacedFolder);
                 CopyFileWithStars(pathToFile, forbiddens, pathToCensored);
             }
             return coincidences;
