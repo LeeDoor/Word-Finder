@@ -23,6 +23,8 @@ namespace WordFinder.View
     {
         public MainWindow()
         {
+            if (System.Diagnostics.Process.GetProcessesByName(System.Diagnostics.Process.GetCurrentProcess().ProcessName).Length > 1)
+                Close();
             InitializeComponent();
 
             DataContext = new MainWindowVM();

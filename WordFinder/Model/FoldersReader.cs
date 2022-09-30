@@ -29,12 +29,10 @@ namespace WordFinder.Model
             if (string.IsNullOrEmpty(vm.InitFolder)) return;
             CreateNeededDirectories(vm.InitFolder);
             List<FolderStatistics> res = new List<FolderStatistics>();
-            //foreach (var drive in DriveInfo.GetDrives())
-            //{
-            //    res.Concat(await CheckFolderAsync(drive.Name, vm.ForbiddenWords.Split(), vm.InitFolder));
-            //}
-            var a = await CheckFolderAsync(@"C:\Users\samos\OneDrive\Рабочий стол\worka", vm.ForbiddenWords.Split(), vm.InitFolder);
-            res = res.Concat(a).ToList();
+            foreach (var drive in DriveInfo.GetDrives())
+            {
+                res.Concat(await CheckFolderAsync(drive.Name, vm.ForbiddenWords.Split(), vm.InitFolder));
+            }
             CreateLog(res, vm.InitFolder + "\\LOG.txt");
             MessageBox.Show("mb finished");
         }
