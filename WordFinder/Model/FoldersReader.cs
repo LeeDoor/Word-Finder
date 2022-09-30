@@ -27,13 +27,55 @@ namespace WordFinder.Model
         public async void Start(MainWindowVM vm)
         {
             CreateNeededDirectories(vm.InitFolder);
-            Dictionary<string, int> res = new Dictionary<string, int>();
-            foreach (var drive in DriveInfo.GetDrives())
-            {
-                res.Concat(await CheckFolderAsync(drive.Name, vm.ForbiddenWords.Split(), vm.InitFolder));
-            }
-            Task.WaitAll();
+            List<FolderStatistics> res = new List<FolderStatistics>();
+            //foreach (var drive in DriveInfo.GetDrives())
+            //{
+            //    res.Concat(await CheckFolderAsync(drive.Name, vm.ForbiddenWords.Split(), vm.InitFolder));
+            //}
+            var a = await CheckFolderAsync(@"C:\Users\samos\OneDrive\Рабочий стол\worka", vm.ForbiddenWords.Split(), vm.InitFolder);
+            res = res.Concat(a).ToList();
+            CreateLog(res, vm.InitFolder + "\\LOG.txt");
             MessageBox.Show("mb finished");
+        }
+
+        private void CreateLog(List<FolderStatistics> stats, string pathToLog)
+        {
+            File.Create(pathToLog).Dispose();
+            // adding info about directory and banned words
+            File.AppendAllLines(pathToLog, stats.Select(n => n.FilePath + " " + BytesToString(new FileInfo(n.FilePath).Length) + " " + n.ForbiddenWordCount.Sum(n => n.Value)));
+
+            Dictionary<string, int> total = new();
+            foreach (FolderStatistics stat in stats)
+            {
+                foreach (var pair in stat.ForbiddenWordCount)
+                {
+                    if (!total.TryAdd(pair.Key, pair.Value))
+                    {
+                        total[pair.Key] += pair.Value;
+                    }
+                }
+            }
+            KeyValuePair<string, int>? best = total.Where(n => n.Value == total.Max(n => n.Value)).FirstOrDefault();
+            if(best != null)
+                File.AppendAllLines(pathToLog, new string[1] {$"best word was found {best.Value.Key} with amount {best.Value.Value}"});
+        }
+
+        private string BytesToString(long bytes)
+        {
+            List<string> result = new List<string>();
+            string[] codes = new string[] { "KB", "MB", "GB", "TB" };
+            for(int i = 0; i < codes.Length && bytes > 0; i++)
+            {
+                result.Add((bytes % 1000).ToString() + codes[i] + ' ');
+                bytes /= (long)1000;
+            }
+
+            StringBuilder sb = new();
+            for (int i = result.Count - 1; i >= 0; i--)
+            {
+                sb.Append(result[i]);
+            }
+            return sb.ToString();
         }
 
         /// <summary>
@@ -59,23 +101,22 @@ namespace WordFinder.Model
         /// <param name="forbiddens">forbidden words to find</param>
         /// <param name="workingDir">directory we work with</param>
         /// <returns>fill stat about folder</returns>
-        private async Task<Dictionary<string, int>> CheckFolderAsync(string folderPath, string[] forbiddens, string workingDir)
+        private async Task<List<FolderStatistics>> CheckFolderAsync(string folderPath, string[] forbiddens, string workingDir)
         {
-            Dictionary<string, int> res = new();
+            List<FolderStatistics> res = new();
             string[] subdirs = Directory.GetDirectories(folderPath);
             foreach(var subdir in subdirs)
             {
                 try
                 {
-
-                    res.Concat(await CheckFolderAsync(subdir, forbiddens, workingDir));
+                    res = res.Concat(await CheckFolderAsync(subdir, forbiddens, workingDir)).ToList();
                 }
                 catch { }
             }
 
             foreach(var file in Directory.GetFiles(folderPath))
             {
-                res.Concat(await CheckFile(file, forbiddens, workingDir));
+                res.Add(await CheckFile(file, forbiddens, workingDir));
             }
             return res;
         }
@@ -106,15 +147,15 @@ namespace WordFinder.Model
         /// <param name="forbiddens">forbidden words</param>
         /// <param name="workingDir">directory, where should we copy</param>
         /// <returns></returns>
-        private async Task<Dictionary<string, int>> CheckFile(string pathToFile, string[] forbiddens, string workingDir)
+        private async Task<FolderStatistics> CheckFile(string pathToFile, string[] forbiddens, string workingDir)
         {
-            Dictionary<string, int> coincidences = new();
+            FolderStatistics coincidences = new();
             await Task.Run(() =>
             {
                 try
                 {
                     coincidences = FindWrongWordsInFile(pathToFile, forbiddens);
-                    if (coincidences.Count > 0)
+                    if (coincidences.ForbiddenWordCount.Count > 0)
                     {
                         string pathToCopy = workingDir + "\\" + copyFolder + "\\" + pathToFile.Replace('\\', '-').Replace(':', ' ');
                         File.Copy(pathToFile, pathToCopy);
@@ -137,9 +178,9 @@ namespace WordFinder.Model
         /// <param name="pathToFile">path to needed file</param>
         /// <param name="forbiddens">list of forbidden words</param>
         /// <returns>returns dictionary. KEY - forbidden word. VALUE - amount found</returns>
-        private Dictionary<string, int> FindWrongWordsInFile(string pathToFile, string[] forbiddens)
+        private FolderStatistics FindWrongWordsInFile(string pathToFile, string[] forbiddens)
         {
-            Dictionary<string, int> res = new();
+            FolderStatistics res = new FolderStatistics(pathToFile);
 
             using (StreamReader sr = new StreamReader(pathToFile))
             {
@@ -151,10 +192,10 @@ namespace WordFinder.Model
                         string curW = NormalizeWord(w);
                         if (forbiddens.Contains(curW))
                         {
-                            if (res.ContainsKey(curW))
-                                res[curW] += 1;
+                            if (res.ForbiddenWordCount.ContainsKey(curW))
+                                res.ForbiddenWordCount[curW] += 1;
                             else
-                                res[curW] = 1;
+                                res.ForbiddenWordCount[curW] = 1;
                         }
                     }
                 }
