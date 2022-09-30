@@ -34,9 +34,18 @@ namespace WordFinder.Model
             //}
             //MessageBox.Show(sb.ToString());
 
-            CopyFileWithStars(@"C:\Users\samos\OneDrive\Рабочий стол\baba.txt", new string[] { "orsgorsgko", "getkpohgpoketgko" }, @"D:\file.txt");
+            //CopyFileWithStars(@"C:\Users\samos\OneDrive\Рабочий стол\baba.txt", new string[] { "orsgorsgko", "getkpohgpoketgko" }, @"D:\file.txt");
+
+            Directory.CreateDirectory(vm.InitFolder);
+
+            //CheckFile(@"C:\Users\samos\OneDrive\Рабочий стол\baba.txt", vm.ForbiddenWords.Split(), vm.InitFolder);
         }
 
+        /// <summary>
+        /// normalizing word by removing containing dots and other
+        /// </summary>
+        /// <param name="word">word to normalize</param>
+        /// <returns>normalized word</returns>
         private string NormalizeWord(string word)
         {
             StringBuilder sb = new();
@@ -50,15 +59,30 @@ namespace WordFinder.Model
             return sb.ToString();
         }
 
+
+        /// <summary>
+        /// prepares all operations with 1 single file
+        /// </summary>
+        /// <param name="pathToFile">path to operationable file</param>
+        /// <param name="forbiddens">forbidden words</param>
+        /// <param name="workingDir">directory, where should we copy</param>
+        /// <returns></returns>
         private Dictionary<string, int> CheckFile(string pathToFile, string[] forbiddens, string workingDir)
         {
             Dictionary<string, int> coincidences = FindWrongWordsInFile(pathToFile, forbiddens);
             if(coincidences.Count > 0)
             {
-                string pathToCopy = workingDir + "\\" + copyFolder + "\\" + pathToFile.Replace('\\', '.');
-                if (!File.Exists(pathToCopy)) 
-                    File.Create(pathToCopy);
+                string pathToCopy = workingDir + "\\" + copyFolder + "\\" + pathToFile.Replace('\\', '-').Replace(':', ' ');
+                if (Directory.Exists(workingDir + "\\" + copyFolder)) 
+                    Directory.Delete(workingDir + "\\" + copyFolder, true);
+                Directory.CreateDirectory(workingDir + "\\" + copyFolder);
                 File.Copy(pathToFile, pathToCopy);
+
+                string pathToCensored = workingDir + "\\" + replacedFolder + "\\" + pathToFile.Replace('\\', '-').Replace(':', ' ');
+                if (Directory.Exists(workingDir + "\\" + replacedFolder))
+                    Directory.Delete(workingDir + "\\" + replacedFolder, true);
+                Directory.CreateDirectory(workingDir + "\\" + replacedFolder);
+                CopyFileWithStars(pathToFile, forbiddens, pathToCensored);
             }
             return coincidences;
         }

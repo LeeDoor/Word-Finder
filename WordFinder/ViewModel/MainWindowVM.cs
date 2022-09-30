@@ -24,7 +24,7 @@ namespace WordFinder.ViewModel
             get => forbiddenWords;
             set
             {
-                ForbiddenWords = value;
+                forbiddenWords = value;
                 OnPropertyChanged(nameof(ForbiddenWords));
             }
         }
