@@ -36,17 +36,23 @@ namespace WordFinder.Model
 
             //CopyFileWithStars(@"C:\Users\samos\OneDrive\Рабочий стол\baba.txt", new string[] { "orsgorsgko", "getkpohgpoketgko" }, @"D:\file.txt");
 
-            if (Directory.Exists(vm.InitFolder + "\\" + replacedFolder))
-                Directory.Delete(vm.InitFolder + "\\" + replacedFolder, true);
-            Directory.CreateDirectory(vm.InitFolder + "\\" + replacedFolder);
 
-            if (Directory.Exists(vm.InitFolder + "\\" + copyFolder))
-                Directory.Delete(vm.InitFolder + "\\" + copyFolder, true);
-            Directory.CreateDirectory(vm.InitFolder + "\\" + copyFolder);
-
-            Directory.CreateDirectory(vm.InitFolder);
+            CreateNeededDirectories(vm.InitFolder);
             CheckFolder(@"C:\Users\samos\OneDrive\Рабочий стол\worka", vm.ForbiddenWords.Split(), vm.InitFolder);
             //CheckFile(@"C:\Users\samos\OneDrive\Рабочий стол\baba.txt", vm.ForbiddenWords.Split(), vm.InitFolder);
+        }
+
+        
+        private void CreateNeededDirectories(string initFolder)
+        {
+            Directory.CreateDirectory(initFolder);
+            if (Directory.Exists(initFolder + "\\" + replacedFolder))
+                Directory.Delete(initFolder + "\\" + replacedFolder, true);
+            Directory.CreateDirectory(initFolder + "\\" + replacedFolder);
+
+            if (Directory.Exists(initFolder + "\\" + copyFolder))
+                Directory.Delete(initFolder + "\\" + copyFolder, true);
+            Directory.CreateDirectory(initFolder + "\\" + copyFolder);
         }
 
         /// <summary>
