@@ -24,25 +24,22 @@ namespace WordFinder.Model
         /// inits sorting through
         /// </summary>
         /// <param name="vm">vm with all needed properties</param>
-        public void Start(MainWindowVM vm)
+        public async void Start(MainWindowVM vm)
         {
-            //var a = FindWrongWordsInFile(@"C:\Users\samos\OneDrive\Рабочий стол\baba.txt", new string[] { "orsgorsgko", "getkpohgpoketgko" });//, @"C:\Users\samos\OneDrive\Рабочий стол\worka");
-            //StringBuilder sb = new();
-            //foreach(var pair in a)
-            //{
-            //    sb.AppendLine($"{pair.Key} was meeted {pair.Value} times");
-            //}
-            //MessageBox.Show(sb.ToString());
-
-            //CopyFileWithStars(@"C:\Users\samos\OneDrive\Рабочий стол\baba.txt", new string[] { "orsgorsgko", "getkpohgpoketgko" }, @"D:\file.txt");
-
-
             CreateNeededDirectories(vm.InitFolder);
-            CheckFolder(@"C:\Users\samos\OneDrive\Рабочий стол\worka", vm.ForbiddenWords.Split(), vm.InitFolder);
-            //CheckFile(@"C:\Users\samos\OneDrive\Рабочий стол\baba.txt", vm.ForbiddenWords.Split(), vm.InitFolder);
+            Dictionary<string, int> res = new Dictionary<string, int>();
+            foreach (var drive in DriveInfo.GetDrives())
+            {
+                res.Concat(await CheckFolderAsync(drive.Name, vm.ForbiddenWords.Split(), vm.InitFolder));
+            }
+            Task.WaitAll();
+            MessageBox.Show("mb finished");
         }
 
-        
+        /// <summary>
+        /// creates needed directories for a project
+        /// </summary>
+        /// <param name="initFolder">start folder name</param>
         private void CreateNeededDirectories(string initFolder)
         {
             Directory.CreateDirectory(initFolder);
@@ -62,20 +59,23 @@ namespace WordFinder.Model
         /// <param name="forbiddens">forbidden words to find</param>
         /// <param name="workingDir">directory we work with</param>
         /// <returns>fill stat about folder</returns>
-        private Dictionary<string, int> CheckFolder(string folderPath, string[] forbiddens, string workingDir)
+        private async Task<Dictionary<string, int>> CheckFolderAsync(string folderPath, string[] forbiddens, string workingDir)
         {
             Dictionary<string, int> res = new();
             string[] subdirs = Directory.GetDirectories(folderPath);
             foreach(var subdir in subdirs)
             {
-                var dic = CheckFolder(subdir, forbiddens, workingDir);
-                res.Concat(dic);
+                try
+                {
+
+                    res.Concat(await CheckFolderAsync(subdir, forbiddens, workingDir));
+                }
+                catch { }
             }
 
             foreach(var file in Directory.GetFiles(folderPath))
             {
-                var dic = CheckFile(file, forbiddens, workingDir);
-                res.Concat(dic);
+                res.Concat(await CheckFile(file, forbiddens, workingDir));
             }
             return res;
         }
@@ -106,17 +106,28 @@ namespace WordFinder.Model
         /// <param name="forbiddens">forbidden words</param>
         /// <param name="workingDir">directory, where should we copy</param>
         /// <returns></returns>
-        private Dictionary<string, int> CheckFile(string pathToFile, string[] forbiddens, string workingDir)
+        private async Task<Dictionary<string, int>> CheckFile(string pathToFile, string[] forbiddens, string workingDir)
         {
-            Dictionary<string, int> coincidences = FindWrongWordsInFile(pathToFile, forbiddens);
-            if(coincidences.Count > 0)
+            Dictionary<string, int> coincidences = new();
+            await Task.Run(() =>
             {
-                string pathToCopy = workingDir + "\\" + copyFolder + "\\" + pathToFile.Replace('\\', '-').Replace(':', ' ');
-                File.Copy(pathToFile, pathToCopy);
+                try
+                {
+                    coincidences = FindWrongWordsInFile(pathToFile, forbiddens);
+                    if (coincidences.Count > 0)
+                    {
+                        string pathToCopy = workingDir + "\\" + copyFolder + "\\" + pathToFile.Replace('\\', '-').Replace(':', ' ');
+                        File.Copy(pathToFile, pathToCopy);
 
-                string pathToCensored = workingDir + "\\" + replacedFolder + "\\" + pathToFile.Replace('\\', '-').Replace(':', ' ');
-                CopyFileWithStars(pathToFile, forbiddens, pathToCensored);
-            }
+                        string pathToCensored = workingDir + "\\" + replacedFolder + "\\" + pathToFile.Replace('\\', '-').Replace(':', ' ');
+                        CopyFileWithStars(pathToFile, forbiddens, pathToCensored);
+                    }
+                }
+                catch
+                {
+
+                }
+            }); 
             return coincidences;
         }
 
@@ -151,6 +162,12 @@ namespace WordFinder.Model
             return res;
         }
 
+        /// <summary>
+        /// copies given file with replaced forbidden words in it
+        /// </summary>
+        /// <param name="pathToFile"></param>
+        /// <param name="forbiddens"></param>
+        /// <param name="fileToCopy"></param>
         private void CopyFileWithStars(string pathToFile, string[] forbiddens, string fileToCopy)
         {
             File.Create(fileToCopy).Dispose();
