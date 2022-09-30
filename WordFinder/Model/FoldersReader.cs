@@ -26,6 +26,7 @@ namespace WordFinder.Model
         /// <param name="vm">vm with all needed properties</param>
         public async void Start(MainWindowVM vm)
         {
+            if (string.IsNullOrEmpty(vm.InitFolder)) return;
             CreateNeededDirectories(vm.InitFolder);
             List<FolderStatistics> res = new List<FolderStatistics>();
             //foreach (var drive in DriveInfo.GetDrives())
@@ -42,7 +43,11 @@ namespace WordFinder.Model
         {
             File.Create(pathToLog).Dispose();
             // adding info about directory and banned words
-            File.AppendAllLines(pathToLog, stats.Select(n => n.FilePath + " " + BytesToString(new FileInfo(n.FilePath).Length) + " " + n.ForbiddenWordCount.Sum(n => n.Value)));
+            File.AppendAllLines(pathToLog, stats
+                .Where(n => n.ForbiddenWordCount.Count != 0)
+                .Select(n => n.FilePath 
+                + " " + BytesToString(new FileInfo(n.FilePath).Length) 
+                + " " + n.ForbiddenWordCount.Sum(n => n.Value)));
 
             Dictionary<string, int> total = new();
             foreach (FolderStatistics stat in stats)
